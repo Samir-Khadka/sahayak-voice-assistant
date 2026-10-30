@@ -1,6 +1,5 @@
 package com.samir.sahayak
 
-import android.app.AlarmClock
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
@@ -162,14 +161,16 @@ class DeviceActions(private val activity: AppCompatActivity) {
                     "pm" -> if (h < 12) h += 12
                     "am" -> if (h == 12) h = 0
                 }
-                ctx.startActivity(Intent(AlarmClock.ACTION_SET_ALARM).apply {
-                    putExtra(AlarmClock.EXTRA_HOUR, h)
-                    putExtra(AlarmClock.EXTRA_MINUTES, min)
+                // Platform intent strings (== AlarmClock constants) to avoid a
+                // compiler resolution quirk with android.app.AlarmClock.
+                ctx.startActivity(Intent("android.intent.action.SET_ALARM").apply {
+                    putExtra("android.intent.extra.alarm.HOUR", h)
+                    putExtra("android.intent.extra.alarm.MINUTES", min)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 })
                 reply("Alarm set.", "अलार्म लगाएँ।")
             } else {
-                ctx.startActivity(Intent(AlarmClock.ACTION_SHOW_ALARMS)
+                ctx.startActivity(Intent("android.intent.action.SHOW_ALARMS")
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 reply("Opened your alarms.", "अलार्महरू खोलें।")
             }

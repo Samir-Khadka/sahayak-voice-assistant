@@ -1,22 +1,21 @@
 package com.samir.sahayak
 
 import ai.picovoice.porcupine.Porcupine
-import ai.picovoice.porcupine.PorcupineWakeWordCallback
+import ai.picovoice.porcupine.PorcupineManager
+import ai.picovoice.porcupine.PorcupineManagerCallback
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 
 /**
  * Always-on "Jarvis" listener. Runs as a foreground service (persistent
  * notification) — the legitimate way to hold the mic on Android.
+ * Uses PorcupineManager, which handles audio capture internally.
  *
  * Needs a free Picovoice access key (paste it in Settings; get one at
  * console.picovoice.ai — free for personal use). Without a key the service
@@ -35,8 +34,7 @@ class WakeWordService : Service() {
         const val EXTRA_LISTEN = "com.samir.sahayak.LISTEN"
     }
 
-    @Volatile private var running = false
-    private var worker: Thread? = null
+    @Volatile private var manager: PorcupineManager? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -59,9 +57,18 @@ class WakeWordService : Service() {
             return START_NOT_STICKY
         }
         startForeground(NOTIF_ID, persistentNotification())
-        if (!running) {
-            running = true
-            worker = Thread(::listenLoop, "sahayak-wake").apply { start() }
+        if (manager == null) {
+            try {
+                manager = PorcupineManager.Builder()
+                    .setAccessKey(key)
+                    .setKeyword(Porcupine.BuiltInKeyword.JARVIS)
+                    .build(applicationContext,
+                        PorcupineManagerCallback { onWakeWord() })
+                manager?.start()
+            } catch (_: Exception) {
+                // Bad key etc: stop; the mic button still works.
+                stopSelf()
+            }
         }
         return START_STICKY
     }
@@ -77,46 +84,6 @@ class WakeWordService : Service() {
             .setContentIntent(open)
             .setOngoing(true)
             .build()
-    }
-
-    private fun listenLoop() {
-        var porcupine: Porcupine? = null
-        var audioRecord: AudioRecord? = null
-        try {
-            val key = getSharedPreferences("sahayak", MODE_PRIVATE)
-                .getString("porcupine_key", "").orEmpty().trim()
-            porcupine = Porcupine.Builder()
-                .setAccessKey(key)
-                .setKeyword(Porcupine.BuiltInKeyword.JARVIS)
-                .setWakeWordCallback(object : PorcupineWakeWordCallback {
-                    override fun invoke() = onWakeWord()
-                })
-                .build(applicationContext)
-
-            val frameLength = porcupine.frameLength
-            val sampleRate = porcupine.sampleRate
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                frameLength * 2 * 4,
-            )
-            if (audioRecord.state != AudioRecord.STATE_INITIALIZED) return
-            audioRecord.startRecording()
-            val buffer = ShortArray(frameLength)
-            while (running) {
-                val n = audioRecord.read(buffer, 0, frameLength)
-                if (n == frameLength) porcupine.process(buffer)
-            }
-        } catch (_: Exception) {
-            // Bad key / no mic: service just stops; mic button still works.
-        } finally {
-            try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) { }
-            try { porcupine?.delete() } catch (_: Exception) { }
-            running = false
-            stopSelf()
-        }
     }
 
     private fun onWakeWord() {
@@ -142,8 +109,9 @@ class WakeWordService : Service() {
     }
 
     override fun onDestroy() {
-        running = false
-        worker?.join(1000)
+        try { manager?.stop() } catch (_: Exception) { }
+        try { manager?.delete() } catch (_: Exception) { }
+        manager = null
         super.onDestroy()
     }
 }

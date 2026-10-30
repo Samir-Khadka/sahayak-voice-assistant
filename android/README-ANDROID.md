@@ -20,8 +20,11 @@ say **"Jarvis"** and the phone obeys. No laptop needed, no account, no cloud.
 
 ## Setup
 
-1. Open this `android/` folder in Android Studio → let Gradle sync →
-   **Build → Build APK(s)** → install on your phone.
+1. **Get the APK — no Android Studio needed:** every push builds it in the
+   cloud. Repo **Actions** tab → latest "Build Android APK" run → download the
+   `sahayak-debug-apk` artifact → install on your phone (allow "install unknown
+   apps" for your browser when asked). Or build locally: open `android/` in
+   Android Studio → **Build → Build APK(s)**.
 2. For always-on: get a **free** access key at console.picovoice.ai
    (personal use is free), paste it in the app's Settings, then tap
    **"Always-on: OFF"** to enable it. Without a key, the mic button still

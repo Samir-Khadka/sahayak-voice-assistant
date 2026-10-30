@@ -54,6 +54,13 @@
         android:visibility="gone" />
 
     <Button
+        android:id="@+id/alwaysOnButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Always-on: OFF" />
+
+    <Button
         android:id="@+id/settingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

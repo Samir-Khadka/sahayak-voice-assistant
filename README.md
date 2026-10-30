@@ -40,17 +40,20 @@ voice-assistant/
    - If the mic/wake-word libraries work: say **"hey jarvis"**, then your command.
    - Otherwise: press Enter to talk (push-to-talk fallback).
 
-## Android phone — setup
+## Android phone — a separate assistant
+
+The phone runs its **own independent** Sahayak — say **"Jarvis"** (or tap the
+mic) and the phone itself obeys: torch, volume, brightness, wifi/bluetooth,
+open apps, alarms, do-not-disturb, battery, notes, dialling — in English or
+Nepali. No laptop needed.
 
 1. Open the `android/` folder in Android Studio and build a debug APK
    (see `android/README-ANDROID.md`), then install it on your phone.
-2. Connect both devices to the **same network** (or Tailscale — recommended,
-   it encrypts the token traffic).
-3. In the app's settings: enter your laptop's IP, port `8770`, and the server token
-   from setup.
-4. On the laptop, run the server: `.venv\Scripts\python -m sahayak.main --server`
-5. Tap the mic in the app and speak — English or Nepali. If the laptop is
-   unreachable, the phone still handles torch and the time on-device.
+2. For always-on "Jarvis": paste a free Picovoice access key
+   (console.picovoice.ai) in Settings, then enable Always-on.
+3. Optional: forward misunderstood commands to the laptop brain
+   (Settings → off by default; the laptop server must be running:
+   `.venv\Scripts\python -m sahayak.main --server`).
 
 ## Security model
 

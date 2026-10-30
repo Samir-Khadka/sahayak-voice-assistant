@@ -1,45 +1,52 @@
 # Sahayak — Android app
 
-Native Kotlin app (no frameworks beyond AndroidX) that talks to the Sahayak
-brain running on your Windows laptop. Runs on **any Android 8.0+ device** —
-nothing Samsung/Pixel specific, no Google Play Services dependency beyond what
-the system's own `SpeechRecognizer` needs.
+A **standalone** voice assistant for your phone — like "hey google", but yours:
+say **"Jarvis"** and the phone obeys. No laptop needed, no account, no cloud.
 
-## What it does
+## How it works
 
-- **Mic button** → speech-to-text via Android's `SpeechRecognizer`
-  (falls back to a typed command box if recognition is unavailable).
-- Sends the text to `POST /v1/command` on your laptop server with your
-  `X-Token`, shows the reply, and **speaks it** via Android TTS
-  (Nepali voice when the reply is Nepali, if installed).
-- **Settings screen**: server URL, token, language (Auto/English/Nepali).
-- **Offline fallback**: if the laptop is unreachable, the phone itself handles
-  torch on/off and "what time is it" — extend `MainActivity.handleLocally()`.
+- **Always-on "Jarvis"** — a foreground service (persistent notification, the
+  legitimate way to hold the mic) runs Porcupine wake-word detection on-device.
+  On wake, the app opens and starts listening immediately.
+- **Commands run on the phone itself**: torch, volume, brightness, wifi/bluetooth
+  (opens the system panel where Android restricts apps), open apps by name,
+  alarms, do-not-disturb, battery, notes, dialling, time/date — in **English or
+  Nepali** (`SahayakIntents.kt` + `DeviceActions.kt`).
+- **Mic button** for tap-to-talk when always-on is off; typed fallback if the
+  device has no speech recognition.
+- **Optional laptop link** (off by default): misunderstood commands can be
+  forwarded to the Sahayak brain on your Windows laptop (`SahayakClient.kt`).
+  The two are fully independent otherwise.
 
-## API contract (implemented by `sahayak/server.py`)
+## Setup
+
+1. Open this `android/` folder in Android Studio → let Gradle sync →
+   **Build → Build APK(s)** → install on your phone.
+2. For always-on: get a **free** access key at console.picovoice.ai
+   (personal use is free), paste it in the app's Settings, then tap
+   **"Always-on: OFF"** to enable it. Without a key, the mic button still
+   works — nothing else is lost.
+3. Grant the permissions it asks for (mic, notifications, bluetooth).
+   Brightness and Do-Not-Disturb each ask once more, via their system screens.
+
+## API contract (only used when laptop forwarding is enabled)
 
 - `GET /v1/health` → `{"ok": true}`
 - `POST /v1/command` `{"text","device_id","lang"}` with header `X-Token`
   → `{"reply_text","action","data","lang"}` · `401` bad token · `429` rate-limited
 
-## Build
-
-1. Open this `android/` folder in Android Studio.
-2. Let Gradle sync (needs internet once for dependencies).
-3. Run on your phone, or **Build → Build APK(s)** for a debug APK to sideload.
-
-## Setup
-
-1. On the laptop: `python -m sahayak.main --server` (note the token printed
-   by `setup.bat`, or read `sahayak_config.json`).
-2. Connect the phone to the same network as the laptop (or Tailscale —
-   recommended: it encrypts the traffic carrying your token).
-3. In the app's Settings: server URL = `http://<laptop-ip>:8770`,
-   token = your token.
-4. Tap the mic and speak — English or Nepali.
-
 ## Permissions (why each is needed)
 
-- `RECORD_AUDIO` — the mic button.
-- `INTERNET` — talking to your laptop's server.
-- `FLASHLIGHT` — the offline torch action only.
+- `RECORD_AUDIO` — mic button + always-on wake word.
+- `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_MICROPHONE` — the always-on service.
+- `POST_NOTIFICATIONS` — the persistent "listening" notification.
+- `INTERNET` — optional laptop forwarding only.
+- `FLASHLIGHT`, `BLUETOOTH_CONNECT`, `WRITE_SETTINGS`,
+  `ACCESS_NOTIFICATION_POLICY`, `SET_ALARM` — the on-device actions above.
+
+## Honest limits
+
+- Wifi toggling: Android 10+ forbids apps from flipping wifi — the app opens
+  the system internet panel instead of pretending.
+- Bluetooth toggle: works where the OS allows, otherwise opens settings.
+- Wake-word accuracy needs the Porcupine key; without it there is no always-on.

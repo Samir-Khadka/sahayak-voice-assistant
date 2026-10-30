@@ -5,6 +5,8 @@ import datetime
 import os
 import platform
 import random
+import re
+import shutil
 import subprocess
 import webbrowser
 from pathlib import Path
@@ -133,23 +135,41 @@ def _not_windows(lang):
     return _reply("That only works on Windows.", "यो विन्डोजमा मात्र काम गर्छ।", lang)
 
 
-def _open_app(name, lang):
+def _sanitize_app_name(name):
+    """Allow only safe characters; return '' if the name looks hostile."""
     key = (name or "").lower().strip()
-    target = APP_MAP.get(key)
+    if not re.fullmatch(r"[a-z0-9][a-z0-9 _\-.]{0,40}", key):
+        return ""
+    return key
+
+
+def _open_app(name, lang):
+    key = _sanitize_app_name(name)
+    if not key:
+        return _reply("I can't open that.", "त्यो खोल्न मिल्दैन।", lang)
     if not WINDOWS:
         return _not_windows(lang)
     try:
+        target = APP_MAP.get(key)
         if target:
-            if target.endswith(":"):
-                os.system(f'start "" "{target}"')
-            elif os.path.exists(target):
+            # Known app: open directly, never through a shell.
+            if os.path.exists(target):
                 os.startfile(target)  # noqa: SLF001
+            elif target.endswith(":"):
+                os.startfile(target)  # noqa: SLF001  (ms-settings:)
             else:
-                os.system(f'start "" {target}')
-        elif key:
-            os.system(f'start "" "{key}"')
+                found = shutil.which(target)
+                if found:
+                    subprocess.Popen([found], shell=False)
+                else:
+                    raise FileNotFoundError(target)
         else:
-            return _reply("Which app?", "कुन एप?", lang)
+            # Unknown name: only launch if it resolves to a real executable.
+            found = shutil.which(key)
+            if not found:
+                return _reply(f"I couldn't find an app called {name}.",
+                              f"{name} नामको एप भेटिएन।", lang)
+            subprocess.Popen([found], shell=False)
         return _reply(f"Opening {name}.", f"{name} खोल्दैछु।", lang)
     except Exception:
         return _reply(f"I couldn't open {name}.", f"{name} खोल्न सकिनँ।", lang)

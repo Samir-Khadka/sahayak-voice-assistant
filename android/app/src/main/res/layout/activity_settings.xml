@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Laptop server URL"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/urlBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="http://192.168.1.5:8770"
+        android:inputType="textUri" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Server token (from setup.bat)"
+        android:textStyle="bold" />
+    <EditText
+        android:id="@+id/tokenBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="paste token"
+        android:inputType="textPassword" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Language"
+        android:textStyle="bold" />
+    <RadioGroup
+        android:id="@+id/langGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton android:id="@+id/langAuto" android:text="Auto" />
+        <RadioButton android:id="@+id/langEn" android:text="English" />
+        <RadioButton android:id="@+id/langNe" android:text="Nepali" />
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Save" />
+</LinearLayout>

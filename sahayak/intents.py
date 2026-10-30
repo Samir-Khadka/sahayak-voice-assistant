@@ -118,6 +118,14 @@ INTENTS = [
      [r"\bspeak (in )?nepali\b"],
      [r"नेपालीमा बोल"],
      None),
+    ("confirm",
+     [r"^\s*(yes|yeah|yep|confirm|do it|yes do it|go ahead)\s*$"],
+     [r"^\s*(हो|हुन्छ|गर|हो गर|हवस्)\s*$"],
+     None),
+    ("cancel",
+     [r"^\s*(no|nope|cancel|stop|never mind|don't)\s*$"],
+     [r"^\s*(होइन|रद्द गर|नगर|रद्द)\s*$"],
+     None),
 ]
 
 

@@ -42,13 +42,29 @@ voice-assistant/
 
 ## Android phone — setup
 
-1. Open the `android/` project in Android Studio and build a debug APK
+1. Open the `android/` folder in Android Studio and build a debug APK
    (see `android/README-ANDROID.md`), then install it on your phone.
-2. Connect both devices to the **same network** (or Tailscale).
+2. Connect both devices to the **same network** (or Tailscale — recommended,
+   it encrypts the token traffic).
 3. In the app's settings: enter your laptop's IP, port `8770`, and the server token
    from setup.
 4. On the laptop, run the server: `.venv\Scripts\python -m sahayak.main --server`
-5. Tap the mic in the app and speak — English or Nepali.
+5. Tap the mic in the app and speak — English or Nepali. If the laptop is
+   unreachable, the phone still handles torch and the time on-device.
+
+## Security model
+
+- **Dangerous actions ask first.** "Shut down" / "restart" never execute on a
+  single command — Sahayak asks "are you sure?", and only "yes" runs it.
+  ("No", or any other command, cancels.)
+- **No shell injection.** App names are strictly sanitized and launched without
+  a shell — `open calc.exe"; rm -rf` style tricks are rejected outright.
+- **Token auth, compared in constant time.** Every `/v1/command` call needs the
+  `X-Token` header; wrong tokens get `401`, and 10 bad tokens in 5 minutes
+  temporarily blocks that IP (`429`). Normal calls are limited to 60/min per IP.
+- **Your token never leaves your machines.** `sahayak_config.json` (which holds
+  it) is gitignored — the pushed repo contains no secrets.
+- Prefer Tailscale over raw LAN so the token travels encrypted.
 
 ## Speech modes (in `sahayak_config.json`)
 

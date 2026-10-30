@@ -20,6 +20,11 @@ DEFAULTS = {
     "piper_voices": {"en": "", "ne": ""},  # .onnx paths; setup.bat downloads English
     "edge_voices": {"en": "en-US-AriaNeural", "ne": "ne-NP-SagarNeural"},
     "notes_file": str(Path.home() / "sahayak_notes.txt"),
+    # Intents that ask "are you sure?" before executing (voice confirmation).
+    "require_confirm_for": ["shutdown", "restart"],
+    # Server hardening
+    "rate_limit_per_minute": 60,   # max /v1/command calls per IP per minute
+    "max_auth_failures": 10,       # failed token attempts per IP per 5 min before temp block
 }
 
 

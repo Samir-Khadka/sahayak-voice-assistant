@@ -1,0 +1,10 @@
+[
+  "tests/test_security.py::test_confirm_nepali",
+  "tests/test_security.py::test_new_command_supersedes_pending",
+  "tests/test_security.py::test_open_app_hostile_name_never_executes",
+  "tests/test_security.py::test_sanitize_accepts_normal_names",
+  "tests/test_security.py::test_sanitize_rejects_shell_metachars",
+  "tests/test_security.py::test_shutdown_asks_for_confirmation_first",
+  "tests/test_security.py::test_shutdown_cancel",
+  "tests/test_security.py::test_shutdown_confirm_executes"
+]

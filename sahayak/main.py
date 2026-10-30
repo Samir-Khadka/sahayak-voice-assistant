@@ -35,18 +35,21 @@ def voice_loop(brain, cfg):
     wake = WakeListener(cfg["wake_word_model"]) if cfg["wake_word_enabled"] else None
 
     def one_command():
-        path = record_seconds()
-        text = brain.stt.transcribe(path, lang_hint=cfg["language"])
-        print(f"[heard] {text!r}")
-        if not text:
-            reply = "Sorry, I didn't hear anything."
+        try:
+            path = record_seconds()
+            text = brain.stt.transcribe(path, lang_hint=cfg["language"])
+            print(f"[heard] {text!r}")
+            if not text:
+                reply = "Sorry, I didn't hear anything."
+                print(f"[sahayak] {reply}")
+                brain.speak(reply, "en")
+                return
+            lang = cfg["language"] if cfg["language"] in ("en", "ne") else detect_lang(text)
+            reply, intent, _ = brain.handle_text(text)
             print(f"[sahayak] {reply}")
-            brain.speak(reply, "en")
-            return
-        lang = cfg["language"] if cfg["language"] in ("en", "ne") else detect_lang(text)
-        reply, intent, _ = brain.handle_text(text)
-        print(f"[sahayak] {reply}")
-        brain.speak(reply, lang)
+            brain.speak(reply, lang)
+        except Exception as e:
+            print(f"[main] command failed ({e}); listening again…")
 
     if wake and wake.available():
         print(f"[main] say '{cfg['wake_word_model']}' to wake me, Ctrl+C to quit.")

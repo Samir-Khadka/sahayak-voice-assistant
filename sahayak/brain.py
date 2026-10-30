@@ -14,18 +14,39 @@ class Brain:
         self.dry_run = dry_run
         self.stt = HybridSTT(self.cfg)
         self.tts = HybridTTS(self.cfg)
+        # Pending dangerous action awaiting voice confirmation: (intent, slots, lang)
+        self.pending = None
 
     def _lang(self, text):
         pref = self.cfg["language"]
         return pref if pref in ("en", "ne") else detect_lang(text)
 
+    def _ask_confirm(self, intent, lang):
+        what = {"shutdown": ("shut down", "शटडाउन"), "restart": ("restart", "रिस्टार्ट")}[intent]
+        w = what[1] if lang == "ne" else what[0]
+        if lang == "ne":
+            return f"यसले तपाईंको कम्प्युटर {w} गर्नेछ। पक्का हो? 'हो' भन्नुहोस्।"
+        return f"This will {w} your computer. Are you sure? Say 'yes'."
+
     def handle_text(self, text):
-        """Process a command string, return the reply string."""
+        """Process a command string, return (reply, intent, slots)."""
         text = (text or "").strip()
         if not text:
             return "", None, {}
         lang = self._lang(text)
         intent, slots, _ = match(text)
+
+        # --- confirmation flow for pending dangerous actions ---
+        if self.pending:
+            pintent, pslots, plang = self.pending
+            self.pending = None
+            if intent == "confirm":
+                return actions_windows.do(pintent, pslots, lang=plang, cfg=self.cfg), pintent, pslots
+            if intent == "cancel":
+                msg = "रद्द गरें।" if plang == "ne" else "Cancelled."
+                return msg, "cancel", {}
+            # any other command supersedes the pending one
+            return self.handle_text(text)
 
         if intent in ("speak_english", "speak_nepali"):
             self.cfg["language"] = "en" if intent == "speak_english" else "ne"
@@ -34,6 +55,9 @@ class Brain:
             return reply, intent, {}
 
         if intent:
+            if intent in (self.cfg["require_confirm_for"] or []):
+                self.pending = (intent, slots, lang)
+                return self._ask_confirm(intent, lang), intent, {"awaiting_confirm": True}
             reply = actions_windows.do(intent, slots, lang=lang, cfg=self.cfg)
             return reply, intent, slots
 

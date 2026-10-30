@@ -1,0 +1,14 @@
+# Secrets & local state — never commit
+sahayak_config.json
+.venv/
+voices/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Notes created by the assistant at runtime
+sahayak_notes.txt
